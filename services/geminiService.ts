@@ -1,10 +1,8 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { Material, Suggestion, Difficulty, Language, ProjectStepsResponse } from '../types';
 
-// FIX: Initialize GoogleGenAI using process.env.API_KEY as per the coding guidelines.
-// This resolves the TypeScript error for 'import.meta.env' and follows the requirement
-// to obtain the API key directly from process.env. The explicit check for the key
-// is removed as the guidelines state to assume it is pre-configured and valid.
+// The API key is injected during the build process by Vite.
+// See vite.config.ts for the configuration.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const parseJsonResponse = <T>(jsonString: string): T => {
@@ -65,7 +63,13 @@ Do not suggest projects that require materials not on the list. You can assume s
     },
   });
   
-  const suggestions = parseJsonResponse<Suggestion[]>(response.text.trim());
+  const responseText = response.text;
+  if (!responseText) {
+    console.error("Model response for suggestions is empty or undefined.", response);
+    throw new Error("Received an empty response from the model when fetching suggestions.");
+  }
+
+  const suggestions = parseJsonResponse<Suggestion[]>(responseText.trim());
   return suggestions;
 };
 
@@ -126,8 +130,14 @@ The response must be in ${language === 'ar' ? 'Arabic' : 'English'}.
             responseSchema: responseSchema,
         }
     });
+    
+    const responseText = response.text;
+    if (!responseText) {
+      console.error("Model response for steps is empty or undefined.", response);
+      throw new Error("Received an empty response from the model when fetching project steps.");
+    }
 
-    const projectData = parseJsonResponse<ProjectStepsResponse>(response.text.trim());
+    const projectData = parseJsonResponse<ProjectStepsResponse>(responseText.trim());
     projectData.steps.sort((a, b) => a.step - b.step);
     return projectData;
 };

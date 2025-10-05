@@ -1,0 +1,9 @@
+{
+  "name": "red-recycling-assistant",
+  "version": "1.0.0",
+  "description": "A vanilla JavaScript application for recycling suggestions on Mars.",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Static site; no build step required.'"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Martian Waste Recycler",
+  "description": "A specialized chatbot that assists Mars colonists in recycling waste materials found in the Jezero Crater. Users input their available waste, and the AI suggests items that can be manufactured, providing step-by-step instructions for the chosen item.",
+  "requestFramePermissions": []
+}

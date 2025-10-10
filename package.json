@@ -4,6 +4,10 @@
   "description": "A vanilla JavaScript application for recycling suggestions on Mars.",
   "private": true,
   "scripts": {
-    "build": "echo 'Static site; no build step required.'"
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
   }
 }

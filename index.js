@@ -338,7 +338,8 @@ const translations = {
 };
 
 const t = (key, language) => {
-  return translations[key] ? translations[key][language] : key;
+  const translationKey = key.toLowerCase();
+  return translations[translationKey] ? translations[translationKey][language] : key;
 };
 
 // --- STATE MANAGEMENT ---
@@ -420,7 +421,7 @@ const renderMaterialInputManager = () => {
         <button data-action="set-difficulty" data-level="${level}" class="px-3 py-1 rounded-sm text-sm font-semibold transition-colors duration-200 ${
             state.difficulty === level ? 'bg-cyan-600 text-white shadow' : 'text-gray-400 hover:bg-gray-700/50'
         }">
-            ${t(level.toLowerCase(), state.language)}
+            ${t(level, state.language)}
         </button>
     `).join('');
 
@@ -502,7 +503,7 @@ const renderSuggestionDisplay = () => {
 
 const renderStepsDisplay = () => {
     if (state.isLoading && !state.projectData) return renderLoadingSpinner(t('loading_steps', state.language));
-    if (!state.projectData) return '';
+    if (!state.projectData || !state.selectedSuggestion) return '';
 
     const { steps, total_power_consumption_kwh, power_consumption_breakdown } = state.projectData;
 
@@ -600,11 +601,12 @@ const renderRecyclerContent = () => {
 
 const renderApp = () => {
     const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
     const langDir = state.language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = state.language;
     document.documentElement.dir = langDir;
     
-    appContainer.className = `min-h-screen bg-gray-900 text-white font-sans ${langDir}`;
+    appContainer.className = `min-h-screen text-white`;
     appContainer.innerHTML = `
         ${renderHeader()}
         <main class="container mx-auto px-4 py-8">
@@ -623,13 +625,18 @@ const renderApp = () => {
 // --- EVENT HANDLERS & LOGIC ---
 
 const handleAddMaterial = (form) => {
-    const name = form.querySelector('#material-name').value;
-    const quantity = form.querySelector('#quantity').value;
-    const unit = form.querySelector('#unit').value;
+    const nameInput = form.querySelector('#material-name');
+    const quantityInput = form.querySelector('#quantity');
+    const unitInput = form.querySelector('#unit');
+
+    const name = nameInput.value;
+    const quantity = quantityInput.value;
+    const unit = unitInput.value;
+
     if (name && quantity) {
         state.materials.push({ id: new Date().toISOString(), name, quantity: parseFloat(quantity), unit });
         form.reset();
-        document.getElementById('unit').value = 'kg';
+        unitInput.value = 'kg';
         renderApp();
     }
 };
@@ -690,6 +697,7 @@ const handleBack = () => {
 };
 
 const handleReset = () => {
+    state.materials = []; // Also clear materials for a full reset
     state.suggestions = [];
     state.selectedSuggestion = null;
     state.projectData = null;
@@ -767,6 +775,7 @@ const initChat = () => {
 
 document.addEventListener('DOMContentLoaded', () => {
     const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
 
     // Event Delegation
     appContainer.addEventListener('click', (e) => {
@@ -776,23 +785,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const { action, id, level, tab } = target.dataset;
 
         switch (action) {
-            case 'delete-material': handleDeleteMaterial(id); break;
-            case 'get-suggestions': handleGetSuggestions(); break;
-            case 'select-suggestion': handleSelectSuggestion(id); break;
-            case 'set-difficulty': state.difficulty = level; renderApp(); break;
-            case 'back': handleBack(); break;
-            case 'reset': handleReset(); break;
-            case 'toggle-language': handleToggleLanguage(); break;
-            case 'set-tab': handleSetTab(tab); break;
+            case 'delete-material': 
+                if (id) handleDeleteMaterial(id); 
+                break;
+            case 'get-suggestions': 
+                handleGetSuggestions(); 
+                break;
+            case 'select-suggestion': 
+                if (id) handleSelectSuggestion(id); 
+                break;
+            case 'set-difficulty': 
+                if (level) state.difficulty = level; 
+                renderApp(); 
+                break;
+            case 'back': 
+                handleBack(); 
+                break;
+            case 'reset': 
+                handleReset(); 
+                break;
+            case 'toggle-language': 
+                handleToggleLanguage(); 
+                break;
+            case 'set-tab': 
+                if (tab) handleSetTab(tab); 
+                break;
         }
     });
 
     appContainer.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (e.target.id === 'add-material-form') {
-            handleAddMaterial(e.target);
+        const target = e.target;
+        if (target.id === 'add-material-form') {
+            handleAddMaterial(target);
         }
-        if (e.target.id === 'chat-form') {
+        if (target.id === 'chat-form') {
             handleSendMessage();
         }
     });
